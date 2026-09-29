@@ -12,10 +12,10 @@ jobs:
 		steps:
 		- name: Fetch Remote Repository Code
 		  uses: actions/checkout@v4
-		- name: Initialize JDK 17 environment
+		- name: Initialize OpenJDK 25 environment
 		  uses: actions/setup-java@v4
 		  with:
-			java-version: "17"
+			java-version: "25.0.4+1"
 			distribution: "temurin"
 			cache: maven
 		- name: Run complete test engine pipeline

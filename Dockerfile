@@ -1,5 +1,6 @@
 #Stage 1: Build the application using maven
-FROM maven:3.9-eclipse-temurin-17 as build
+FROM maven:3.9-eclipse-temurin-25 as build
+WORKDIR /app
 
 #Copy the project configuration and source code
 COPY pom.xml .
@@ -9,7 +10,7 @@ COPY src ./src
 RUN mvn clean package
 
 #Stage 2: Create a lightweight runtime image
-FROM eclipse-temurin: 17-jre-alpine
+FROM eclipse-temurin:25.0.4.1_1-jre-alpine
 WORKDIR /app
 
 #Copy the compiled jar from the build stage

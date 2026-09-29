@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # 1. Your Java Calculator Application Container
+  calculator-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: java-calculator
+    restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 2. Grafana Loki (Log Aggregation Engine)
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+
+  # 3. Promtail (Log Shipper - Grabs Logs from Docker to Loki)
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    entrypoint:
+      - sh
+      - -c
+      - |
+        mkdir -p /etc/promtail
+        echo "
+        server:
+          http_listen_port: 9080
+          grpc_listen_port: 0
+
+        positions:
+          filename: /tmp/positions.yaml
+
+        clients:
+          - url: http://loki:3100/loki/api/v1/push
+
+        scrape_configs:
+        - job_name: docker
+          static_configs:
+          - targets: [localhost]
+            labels:
+              job: docker-logs
+              __path__: /var/lib/docker/containers/*/*.log
+        " > /etc/promtail/config.yml && /usr/bin/promtail -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+
+  # 4. Prometheus (Metrics Engine)
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  # 5. Grafana Dashboard Visualizer
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
+      - prometheus
