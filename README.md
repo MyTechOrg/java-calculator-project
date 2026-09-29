@@ -51,3 +51,7 @@ How to Spin Up and View Your Logs:
 Launch the entire stack: docker compose up -d --build
 
 After executing above command, Docker will pull down Prometheus, Loki, Grafana, and Promtail, compile your custom Java Calculator container, and link them all together in an internal network without cluttering your actual computer system.
+
+IV. Jenkins:
+Open http://localhost:8080 (bhushan/passw0rd)
+
